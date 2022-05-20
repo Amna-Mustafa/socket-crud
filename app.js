@@ -28,25 +28,42 @@ app.get('/', (req, res) => {
 
 
 io.on('connection', function(socket) {
-  // console.log('Client connected...');
-
-  socket.on('saveUser', async (data) => {
+  socket.on('users:save', async (data) => {
+    
     await User
       .create({
         name: data.name,
         email: data.email,
-        passowrd: data.password,
+        password: data.password,
         dob: data.dob
       });
-
+      
       emitAllUser();
   });
 
   async function emitAllUser() {
-    const users = await User.findAll();
+    const users = await User.findAll({
+      order: [
+        ['id', 'ASC'],
+      ],
+    } 
+    );
     socket.emit('users:all', users);
   }
- 
+  
+  socket.on('users:update', async userdata => {
+    console.log("User Data", userdata);
+    const user = await User.findByPk(userdata.id);
+    if(user) {
+      user.name = userdata.name;
+      user.email = userdata.email;
+      user.dob = userdata.dob;
+      await user.save();
+      emitAllUser();
+    }
+  });
+
+
   socket.on('users:delete', async userId => {
     const user = await User.findByPk(userId);
     if(user) {

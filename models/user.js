@@ -17,15 +17,29 @@ module.exports = (sequelize, DataTypes) => {
   User.init({
     name: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
+      validate: {
+        min: 5,
+        notNull: {
+          msg: 'Please enter your name'
+        }
+      }
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: true
+      required: [true, "email not provided"],
+      validate: {
+        isEmail: {
+          msg: 'Please enter a valid email'
+        }
+      }
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
+      set(value) {
+        this.setDataValue('password', bcrypt.hashSync(value, 10));
+      },
     },
     dob: {
       type: DataTypes.STRING,

@@ -9,7 +9,7 @@
                 <div class="col-md-8 offset-2">
                     <h1>Hello World!</h1>
                     <form id="form" action="">
-                        <input type="hidden" name="id" >
+                        <input type="hidden" name="id" id="user_id">
                         <input type="hidden" name="action" id="formAction" value="create">
                         <div class="form-group">
                             <label for="exampleInputEmail1">Name</label>
@@ -21,12 +21,13 @@
                         </div>
                         <div class="form-group">
                         <label for="exampleInputPassword1">Password</label>
-                        <input type="password" class="form-control" id="password" placeholder="Enter Password" required>
+                        <input type="password" class="form-control" id="password" placeholder="Enter Password" >
                         </div>
                         <div class="form-group">
                             <label for="exampleInputEmail1">DOB</label>
                             <input type="text" class="form-control" id="dob"  placeholder="Enter date of birth" required>
                         </div>
+                        <br>
                         <button  class="btn btn-primary" >Submit</button>
                     </form>
                     <ul id="users">
@@ -41,14 +42,16 @@
             var socket = io();
             form.addEventListener('submit', function(e) {
                 var form = document.getElementById('form');
+                var id = document.getElementById('user_id');
                 var name = document.getElementById('name');
                 var email = document.getElementById('email');
                 var password = document.getElementById('password');
                 var dob = document.getElementById('dob');
             
                 e.preventDefault();
-                if (name.value) {
-                    socket.emit('saveUser', {
+                
+                if (name.value && id.value == '') {
+                    socket.emit('users:save', {
                         name: name.value,
                         email: email.value,
                         password: password.value,
@@ -59,11 +62,24 @@
                     password.value = '';
                     dob.value = '';
 
+                }else{
+                    //console.log("editing ");
+                    socket.emit('users:update', {
+                        id: user_id.value,
+                        name: name.value,
+                        email: email.value,
+                        // password: password.value,
+                        dob: dob.value
+                    });
+                    name.value = '';
+                    email.value = '';
+                    // password.value = '';
+                    dob.value = '';
                 }
             });
 
             socket.on('users:all', users => {
-                console.log('users', users);
+                // console.log('users', users);
                 let list = document.getElementById('users');
                 list.innerHTML = '';
                 Array.from(users).forEach(addUser);
@@ -71,16 +87,21 @@
 
             function editUser(user) {
                 console.log('edit user', user);
-
+                var id = document.getElementById('user_id');
                 var name = document.getElementById('name');
                 var email = document.getElementById('email');
                 var password = document.getElementById('password');
                 var dob = document.getElementById('dob');
 
+                id.value = user.id;
                 name.value = user.name;
                 email.value = user.email;
-                password.value = user.password;
+                // password.value = user.password;
                 dob.value = user.dob;
+
+               
+                ///socket.emit('users:update', user);
+                
 
             }
 
@@ -98,7 +119,7 @@
                 editBtn.classList.add('btn');
                 editBtn.classList.add('btn-primary');
                 editBtn.classList.add('btn-sm');
-                editBtn.setAttribute('onclick', `editUser(${user.id})`);
+                editBtn.setAttribute('onclick', `editUser(${JSON.stringify(user)})`);
                 listItem.appendChild(editBtn);
                 listItem.classList.add('my-2');
 
